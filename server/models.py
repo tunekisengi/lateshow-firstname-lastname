@@ -1,4 +1,5 @@
 from app import db
+from sqlalchemy.orm import validates
 
 class Episode(db.Model):
     __tablename__ = "episodes"
@@ -15,7 +16,7 @@ class Episode(db.Model):
             "number": self.number
         }
         if include_appearances:
-            data["appearances"] = [a.to_dict() for a in self.appearances]
+            data["appearances"] = [a.to_dict_for_episode() for a in self.appearances]
         return data
 
 class Guest(db.Model):
@@ -54,6 +55,17 @@ class Appearance(db.Model):
             "guest": self.guest.to_dict()
         }
 
-    @staticmethod
-    def validate_rating(rating):
-        return 1 <= rating <= 5
+    def to_dict_for_episode(self):
+        return {
+            "id": self.id,
+            "episode_id": self.episode_id,
+            "guest_id": self.guest_id,
+            "rating": self.rating,
+            "guest": self.guest.to_dict()
+        }
+
+    @validates('rating')
+    def validate_rating(self, key, rating):
+        if not (1 <= rating <= 5):
+            raise ValueError("Rating must be between 1 and 5")
+        return rating

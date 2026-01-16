@@ -33,16 +33,16 @@ def create_appearance():
     episode_id = data.get("episode_id")
     guest_id = data.get("guest_id")
 
-    if not Appearance.validate_rating(rating):
-        return jsonify({"errors": ["Rating must be between 1 and 5"]}), 400
-
     episode = Episode.query.get(episode_id)
     guest = Guest.query.get(guest_id)
 
     if not episode or not guest:
         return jsonify({"errors": ["Episode or Guest not found"]}), 404
 
-    appearance = Appearance(rating=rating, episode=episode, guest=guest)
-    db.session.add(appearance)
-    db.session.commit()
-    return jsonify(appearance.to_dict()), 201
+    try:
+        appearance = Appearance(rating=rating, episode=episode, guest=guest)
+        db.session.add(appearance)
+        db.session.commit()
+        return jsonify(appearance.to_dict()), 201
+    except ValueError as e:
+        return jsonify({"errors": [str(e)]}), 400
